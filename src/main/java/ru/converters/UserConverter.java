@@ -41,7 +41,7 @@ public class UserConverter {
             user.setUsername(dto.getUsername());
         }
         if (dto.getPassword() != null) {
-            user.setPassword(passwordEncoder.encode(dto.getPassword()));
+            user.setPassword(dto.getPassword());
         }
         if (dto.getEmail() != null) {
             user.setEmail(dto.getEmail());
