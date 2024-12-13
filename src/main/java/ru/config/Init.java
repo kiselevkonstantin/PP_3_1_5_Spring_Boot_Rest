@@ -1,80 +1,56 @@
 package ru.config;
 
-import org.springframework.context.ApplicationListener;
-import org.springframework.context.event.ContextRefreshedEvent;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-import ru.exception.NoSuchRoleException;
-import ru.exception.NoSuchUserException;
 import ru.models.Role;
 import ru.models.User;
 import ru.service.RoleService;
 import ru.service.UserService;
 
-import java.util.List;
-import java.util.stream.Stream;
+import java.util.HashSet;
+import java.util.Set;
 
 @Component
-public class Init implements
-        ApplicationListener<ContextRefreshedEvent> {
+public class Init implements CommandLineRunner {
 
-    private boolean alreadySetup = false;
+
     private final RoleService roleService;
     private final UserService userService;
-    private final PasswordEncoder passwordEncoder;
 
-    public Init(RoleService roleService, UserService userService, PasswordEncoder passwordEncoder) {
+    @Autowired
+    public Init(RoleService roleService, UserService userService) {
         this.roleService = roleService;
         this.userService = userService;
-        this.passwordEncoder = passwordEncoder;
+
     }
 
-    @Transactional
-    public Role createRoleIfNotFound(String roleStr) {
-        try {
-            Role role = roleService.findByName(roleStr);
-            return role;
-        } catch (NoSuchRoleException e) {
-            Role newRole = new Role();
-            newRole.setName(roleStr);
-            roleService.save(newRole);
-            return newRole;
-        }
-    }
-
-    @Transactional
-    public User createUserIfNotFound(String userStr, List<Role> roles) {
-        try {
-            User user = userService.findByUsername(userStr);
-            return user;
-        } catch (NoSuchUserException e) {
-            User newUser = new User(userStr);
-            newUser.setPassword(passwordEncoder.encode(userStr));
-            if (userStr.equals("admin")) {
-                newUser.addRole(roles.get(0));
-                newUser.addRole(roles.get(1));
-            } else if (userStr.equals("user")) {
-                newUser.addRole(roles.get(1));
-            }
-            return newUser;
-        }
-    }
-
-    @Transactional
     @Override
-    public void onApplicationEvent(ContextRefreshedEvent event) {
+    public void run(String... args) throws Exception {
 
-        if (alreadySetup) {
-            return;
-        }
+        Set<Role> firstUserRole = new HashSet<>();
+        Set<Role> secondUserRole = new HashSet<>();
 
-        List<Role> roles = Stream.of("ROLE_ADMIN", "ROLE_USER").map(this::createRoleIfNotFound).toList();
-        List<User> users = Stream.of("admin", "user").map(userStr -> createUserIfNotFound(userStr, roles)).toList();
+        Role adminRole = new Role("ROLE_ADMIN");
+        Role userRole = new Role("ROLE_USER");
 
-        userService.saveAll(users);
+        firstUserRole.add(adminRole);
+        secondUserRole.add(userRole);
 
-        alreadySetup = true;
+        roleService.save(adminRole);
+        roleService.save(userRole);
+
+
+        User firstUser = new User(1L, "Alex", "123",
+                "alex@alex.com", "123456", firstUserRole);
+        User secondUser = new User(2L, "Konstantin", "456",
+                "konst@gmail.com", "123456", secondUserRole);
+
+
+        userService.save(firstUser);
+        userService.save(secondUser);
+
+
     }
-
 }
+
