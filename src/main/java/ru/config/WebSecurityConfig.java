@@ -18,7 +18,7 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class WebSecurityConfig {
 
-    private UserDetailsService userDetailsService;
+    private final UserDetailsService userDetailsService;
 
     @Autowired
     public WebSecurityConfig(UserDetailsService userDetailsService) {
@@ -49,8 +49,14 @@ public class WebSecurityConfig {
                 .formLogin(form -> form.loginPage("/login").successHandler(new SuccessUserHandler())
                         .permitAll()
                 )
-                .logout(logout -> logout.logoutUrl("/logout").logoutSuccessUrl("/index").permitAll()
+                .logout(logout -> logout.logoutUrl("/logout").permitAll()
                 ).userDetailsService(userDetailsService)
                 .build();
     }
 }
+
+
+// СТАРЫЙ ВАРИАНТ
+//.logout(logout -> logout.logoutUrl("/logout").logoutSuccessUrl("/index").permitAll()
+//                ).userDetailsService(userDetailsService)
+//                .build();
